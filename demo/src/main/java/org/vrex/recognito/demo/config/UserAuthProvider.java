@@ -2,6 +2,7 @@ package org.vrex.recognito.demo.config;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,25 +11,37 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.vrex.recognito.demo.model.LoggedInUser;
-import org.vrex.recognito.demo.service.UserService;
+import org.vrex.recognito.demo.model.User;
 
 import java.util.Arrays;
 
 @Component
 public class UserAuthProvider implements AuthenticationProvider {
 
-    @Autowired
-    private UserService userService;
+    private static final String INVALID_CREDENTIALS_ERROR = "Credentials provided are not valid";
 
+    @Autowired
+    private User loggedInUser;
+
+    /**
+     * Authenticates the provided credentials against Recognito
+     *
+     * @param authentication
+     * @return
+     * @throws AuthenticationException
+     */
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        LoggedInUser user = userService.authenticateUser();
+        loggedInUser.setUpRestTemplate(authentication);
+        loggedInUser.loginUser();
+        LoggedInUser user = loggedInUser.getUser();
+
         if (user != null) {
-            //log.info("{} User Authenticated - {}", LOG_TEXT, username);
-            return new UsernamePasswordAuthenticationToken(user.getUsername(), authentication.getCredentials().toString(), Arrays.asList(new SimpleGrantedAuthority(user.getRole())));
+            return new UsernamePasswordAuthenticationToken(user.getUsername(),
+                    authentication.getCredentials().toString(),
+                    Arrays.asList(new SimpleGrantedAuthority(user.getRole())));
         } else {
-            //log.error("{} Invalid credentials for user - {}", LOG_TEXT, username);
-            throw new BadCredentialsException("invalid creds");
+            throw new BadCredentialsException(INVALID_CREDENTIALS_ERROR);
         }
     }
 

@@ -23,5 +23,6 @@ public class LoggedInUser implements Serializable {
     private LocalDateTime onboardedOn;
     private LocalDateTime updatedOn;
     private boolean resourcesEnabled;
+    private UserToken recognitoToken;
 
 }
