@@ -1,4 +1,4 @@
-package org.vrex.recognito.demo.config;
+package org.vrex.recognito.demo.model;
 
 /**
  * Application defined roles

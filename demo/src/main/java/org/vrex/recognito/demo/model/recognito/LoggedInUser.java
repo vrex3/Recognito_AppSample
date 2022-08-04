@@ -1,9 +1,10 @@
-package org.vrex.recognito.demo.model;
+package org.vrex.recognito.demo.model.recognito;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.Serializable;
 
@@ -11,8 +12,13 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class UserToken implements Serializable {
+public class LoggedInUser implements Serializable {
 
-    private String appId;
+    private UserDetails userDetails;
     private String token;
+
+    private RestTemplate restTemplate;
+    private String jsessionID;
+
+
 }

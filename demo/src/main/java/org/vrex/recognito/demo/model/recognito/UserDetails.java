@@ -1,4 +1,4 @@
-package org.vrex.recognito.demo.model;
+package org.vrex.recognito.demo.model.recognito;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class LoggedInUser implements Serializable {
+public class UserDetails implements Serializable {
 
     private String username;
     private String email;
@@ -23,6 +23,6 @@ public class LoggedInUser implements Serializable {
     private LocalDateTime onboardedOn;
     private LocalDateTime updatedOn;
     private boolean resourcesEnabled;
-    private UserToken recognitoToken;
+
 
 }
