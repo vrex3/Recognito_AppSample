@@ -48,11 +48,13 @@ public class UserController {
     /**
      * Authorizes logged in user against API path (treated as resource)
      *
+     * @param response
+     * @param resourceId
      * @return
      */
     @GetMapping(value = "/authorize/resource/{resourceId}")
     public ResponseEntity<?> authorize(HttpServletResponse response,
-                                        @PathVariable String resourceId) {
+                                       @PathVariable String resourceId) {
         return recognitoClient.buildAuthResponse(response);
     }
 }
