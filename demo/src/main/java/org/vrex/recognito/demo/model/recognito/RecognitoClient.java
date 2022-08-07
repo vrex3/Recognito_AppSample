@@ -20,8 +20,13 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.util.UriBuilder;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.vrex.recognito.demo.model.ApplicationException;
 
+import java.net.URI;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,8 +46,11 @@ import java.util.Map;
 @Scope(value = "session", proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class RecognitoClient implements InitializingBean {
 
-    @Value("${recognito.host.url}")
+    @Value("${recognito.host}")
     private String recognitoHost;
+
+    @Value("${recognito.port}")
+    private String recognitoPort;
 
     private LoggedInUser loggedInUser;
 
@@ -72,7 +80,7 @@ public class RecognitoClient implements InitializingBean {
      * Token is stored in this bean for further authorizations
      */
     public void loginAuthenticatedUser() {
-        ResponseEntity userLoginResponse = executeGET(recognitoHost + "/app/user/login", UserDetails.class);
+        ResponseEntity userLoginResponse = executeGET("/app/user/login", UserDetails.class);
         if (userLoginResponse.getStatusCode().equals(HttpStatus.OK) && userLoginResponse.hasBody()) {
             this.loggedInUser.setUserDetails((UserDetails) userLoginResponse.getBody());
             generateTokenForLoggedInUser();
@@ -85,7 +93,7 @@ public class RecognitoClient implements InitializingBean {
      * Stores token in session bean
      */
     public void generateTokenForLoggedInUser() {
-        ResponseEntity tokenResponse = executeGET(recognitoHost + "/app/user/token/generate", UserToken.class);
+        ResponseEntity tokenResponse = executeGET("/app/user/token/generate", UserToken.class);
         if (tokenResponse.getStatusCode().equals(HttpStatus.OK) && tokenResponse.hasBody()) {
             this.loggedInUser.setToken(((UserToken) tokenResponse.getBody()).getToken());
         }
@@ -98,8 +106,8 @@ public class RecognitoClient implements InitializingBean {
      * @return
      */
     public boolean authorizeUser(String resource) {
-        Map<String, String> uriVariables = new HashMap<>();
-        uriVariables.put(RESOURCE, resource);
+        MultiValueMap<String, String> uriVariables = new LinkedMultiValueMap<>();
+        uriVariables.add(RESOURCE, resource);
 
         MultiValueMap<String, String> headerParams = new LinkedMultiValueMap<>();
         headerParams.add(APP_UUID, loggedInUser.getUserDetails().getAppUUID());
@@ -107,39 +115,42 @@ public class RecognitoClient implements InitializingBean {
 
         HttpEntity entity = getHttpEntityWithJsessionCookie(headerParams);
 
-        ResponseEntity response = executeGET(recognitoHost + "/app/user/token/authorize", UserDetails.class, entity, uriVariables);
+        ResponseEntity response = executeGET("/app/user/token/authorize", UserDetails.class, entity, uriVariables);
+
         return response != null && response.getStatusCode().equals(HttpStatus.OK);
     }
 
 
-    /**
+    /*
      * PRIVATE UTILITY METHODS
      */
 
     private static final String SESSION_COOKIE_REQUEST_KEY = "Cookie";
     private static final String SESSION_COOKIE_RESPONSE_KEY = "Set-Cookie";
     private static final String APP_UUID = "x-app-uuid";
-    private static final String APP_TOKEN = "x-auth-token";
-    private static final String RESOURCE = "resource";
+    public static final String APP_TOKEN = "x-auth-token";
+    private static final String RESOURCE = "x-resource";
 
     private static final String CLIENT_EXCEPTION = "User is not authorized to perform the requested action";
     private static final String SERVER_EXCEPTION = "Recognito is not responding";
+
+    private static final String HTTP_SCHEME = "http";
 
     /**
      * Executes Http GET against provided Recognito URL with
      * no params and no httpEntity
      *
-     * @param url
+     * @param path
      * @param clazz
      * @param <T>
      * @return
      */
-    private <T> ResponseEntity executeGET(String url, Class<T> clazz) {
+    private <T> ResponseEntity executeGET(String path, Class<T> clazz) {
 
         ResponseEntity response = null;
 
         try {
-            response = this.loggedInUser.getRestTemplate().exchange(url, HttpMethod.GET, getHttpEntityWithJsessionCookie(), clazz);
+            response = this.loggedInUser.getRestTemplate().exchange(buildURI(path, null), HttpMethod.GET, getHttpEntityWithJsessionCookie(), clazz);
             setSessionCookie(response);
         } catch (HttpClientErrorException exception) { //4xx status code
             throw ApplicationException.builder()
@@ -162,19 +173,25 @@ public class RecognitoClient implements InitializingBean {
      * Executes Http GET against provided Recognito URL
      * with Params and HttpEntity
      *
-     * @param url
+     * @param path
      * @param clazz
      * @param entity
      * @param uriVariables
      * @param <T>
      * @return
      */
-    private <T> ResponseEntity executeGET(String url, Class<T> clazz, HttpEntity entity, Map<String, String> uriVariables) {
+    private <T> ResponseEntity executeGET(String path, Class<T> clazz, HttpEntity entity, MultiValueMap<String, String> uriVariables) {
 
         ResponseEntity response = null;
 
         try {
-            response = this.loggedInUser.getRestTemplate().exchange(url, HttpMethod.GET, entity, clazz, uriVariables);
+
+            response = this.loggedInUser.getRestTemplate()
+                    .exchange(
+                            buildURI(path, uriVariables),
+                            HttpMethod.GET,
+                            entity,
+                            clazz);
             setSessionCookie(response);
         } catch (HttpClientErrorException exception) { //4xx status code
             response = new ResponseEntity(HttpStatus.FORBIDDEN);
@@ -221,5 +238,32 @@ public class RecognitoClient implements InitializingBean {
         }
     }
 
+    /**
+     * Builds an return an URI
+     *
+     * @param path
+     * @param uriVariables
+     * @return
+     */
+    private URI buildURI(String path, MultiValueMap<String, String> uriVariables) {
+        return uriVariables != null ?
+                UriComponentsBuilder.newInstance()
+                        .scheme(HTTP_SCHEME)
+                        .host(recognitoHost)
+                        .port(recognitoPort)
+                        .path(path)
+                        .queryParams(uriVariables)
+                        .build()
+                        .encode()
+                        .toUri() :
+                UriComponentsBuilder.newInstance()
+                        .scheme(HTTP_SCHEME)
+                        .host(recognitoHost)
+                        .port(recognitoPort)
+                        .path(path)
+                        .build()
+                        .encode()
+                        .toUri();
 
+    }
 }

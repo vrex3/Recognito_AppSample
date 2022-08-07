@@ -22,7 +22,7 @@ public class UserDetails implements Serializable {
     private String version;
     private LocalDateTime onboardedOn;
     private LocalDateTime updatedOn;
-    private boolean resourcesEnabled;
+    private String resourcesEnabled;
 
 
 }

@@ -20,5 +20,4 @@ public class LoggedInUser implements Serializable {
     private RestTemplate restTemplate;
     private String jsessionID;
 
-
 }
