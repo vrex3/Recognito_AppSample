@@ -40,9 +40,9 @@ public class UserController {
      * SAMPLE AUTH APIs for testing/demo purposes
      * Access list
      * /authorize/resource/1 -> APP_DEVELOPER
-     * /authorize/resource2 -> APP_ADMIN,APP_DEVELOPER
-     * /authorize/resource3 -> APP_USER
-     * /authorize/resource4 -> APP_DEVELOPER,APP_USER
+     * /authorize/resource/2 -> APP_ADMIN,APP_DEVELOPER
+     * /authorize/resource/3 -> APP_USER
+     * /authorize/resource/4 -> APP_DEVELOPER,APP_USER
      */
 
     /**
