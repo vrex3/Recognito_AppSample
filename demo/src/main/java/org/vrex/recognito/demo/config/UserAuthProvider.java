@@ -2,7 +2,6 @@ package org.vrex.recognito.demo.config;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,8 +9,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
-import org.vrex.recognito.demo.model.LoggedInUser;
-import org.vrex.recognito.demo.model.User;
+import org.springframework.util.ObjectUtils;
+import org.vrex.recognito.demo.model.recognito.LoggedInUser;
+import org.vrex.recognito.demo.model.recognito.RecognitoClient;
 
 import java.util.Arrays;
 
@@ -21,7 +21,7 @@ public class UserAuthProvider implements AuthenticationProvider {
     private static final String INVALID_CREDENTIALS_ERROR = "Credentials provided are not valid";
 
     @Autowired
-    private User loggedInUser;
+    private RecognitoClient recognitoClient;
 
     /**
      * Authenticates the provided credentials against Recognito
@@ -32,14 +32,17 @@ public class UserAuthProvider implements AuthenticationProvider {
      */
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        loggedInUser.setUpRestTemplate(authentication);
-        loggedInUser.loginUser();
-        LoggedInUser user = loggedInUser.getUser();
+        recognitoClient.setUpRestTemplate(authentication);
+        recognitoClient.loginAuthenticatedUser();
+        LoggedInUser user = recognitoClient.getLoggedInUser();
 
-        if (user != null) {
-            return new UsernamePasswordAuthenticationToken(user.getUsername(),
+        if (!ObjectUtils.isEmpty(user) &&
+                !ObjectUtils.isEmpty(user.getUserDetails())) {
+
+            return new UsernamePasswordAuthenticationToken(
+                    user.getUserDetails().getUsername(),
                     authentication.getCredentials().toString(),
-                    Arrays.asList(new SimpleGrantedAuthority(user.getRole())));
+                    Arrays.asList(new SimpleGrantedAuthority(user.getUserDetails().getRole())));
         } else {
             throw new BadCredentialsException(INVALID_CREDENTIALS_ERROR);
         }

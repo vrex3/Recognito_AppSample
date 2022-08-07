@@ -1,4 +1,4 @@
-package org.vrex.recognito.demo.model;
+package org.vrex.recognito.demo.model.recognito;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
