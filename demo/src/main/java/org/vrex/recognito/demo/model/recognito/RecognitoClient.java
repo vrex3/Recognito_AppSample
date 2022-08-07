@@ -20,16 +20,11 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.util.UriBuilder;
-import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.vrex.recognito.demo.model.ApplicationException;
 
 import javax.servlet.http.HttpServletResponse;
 import java.net.URI;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * This bean maintains information of logged in user.
@@ -81,7 +76,7 @@ public class RecognitoClient implements InitializingBean {
      * Token is stored in this bean for further authorizations
      */
     public void loginAuthenticatedUser() {
-        ResponseEntity userLoginResponse = executeGET("/app/user/login", UserDetails.class);
+        ResponseEntity userLoginResponse = executeGET(RECOGNITO_LOGIN, UserDetails.class);
         if (userLoginResponse.getStatusCode().equals(HttpStatus.OK) && userLoginResponse.hasBody()) {
             this.loggedInUser.setUserDetails((UserDetails) userLoginResponse.getBody());
             generateTokenForLoggedInUser();
@@ -94,7 +89,7 @@ public class RecognitoClient implements InitializingBean {
      * Stores token in session bean
      */
     public void generateTokenForLoggedInUser() {
-        ResponseEntity tokenResponse = executeGET("/app/user/token/generate", UserToken.class);
+        ResponseEntity tokenResponse = executeGET(RECOGNITO_GENERATE_TOKEN, UserToken.class);
         if (tokenResponse.getStatusCode().equals(HttpStatus.OK) && tokenResponse.hasBody()) {
             this.loggedInUser.setToken(((UserToken) tokenResponse.getBody()).getToken());
         }
@@ -116,6 +111,10 @@ public class RecognitoClient implements InitializingBean {
 
     /**
      * Authorizes the logged in user against a passed resource
+     * Sets resource as query param
+     * Sets appUUID and token as request headers
+     * Returns true on Http 200 OK response from recognito
+     * Returns false otherwise
      *
      * @param resource
      * @return
@@ -130,7 +129,7 @@ public class RecognitoClient implements InitializingBean {
 
         HttpEntity entity = getHttpEntityWithJsessionCookie(headerParams);
 
-        ResponseEntity response = executeGET("/app/user/token/authorize", UserDetails.class, entity, uriVariables);
+        ResponseEntity response = executeGET(RECOGNITO_AUTHORIZE_TOKEN, UserDetails.class, entity, uriVariables);
 
         return response != null && response.getStatusCode().equals(HttpStatus.OK);
     }
@@ -150,6 +149,11 @@ public class RecognitoClient implements InitializingBean {
     private static final String SERVER_EXCEPTION = "Recognito is not responding";
 
     private static final String HTTP_SCHEME = "http";
+
+    private static final String RECOGNITO_CLIENT_API = "/client/user";
+    private static final String RECOGNITO_LOGIN = RECOGNITO_CLIENT_API + "/login";
+    private static final String RECOGNITO_GENERATE_TOKEN = RECOGNITO_CLIENT_API + "/token/generate";
+    private static final String RECOGNITO_AUTHORIZE_TOKEN = RECOGNITO_CLIENT_API + "/token/authorize";
 
     /**
      * Executes Http GET against provided Recognito URL with
