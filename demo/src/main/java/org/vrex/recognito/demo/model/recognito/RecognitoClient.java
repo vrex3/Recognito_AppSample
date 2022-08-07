@@ -25,6 +25,7 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.vrex.recognito.demo.model.ApplicationException;
 
+import javax.servlet.http.HttpServletResponse;
 import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
@@ -97,6 +98,20 @@ public class RecognitoClient implements InitializingBean {
         if (tokenResponse.getStatusCode().equals(HttpStatus.OK) && tokenResponse.hasBody()) {
             this.loggedInUser.setToken(((UserToken) tokenResponse.getBody()).getToken());
         }
+    }
+
+    /**
+     * Wraps an auth response in a response entity
+     * after reading the response status set by the Token Validation filter.
+     *
+     * @param response
+     * @return
+     */
+    public ResponseEntity buildAuthResponse(HttpServletResponse response) {
+        return new ResponseEntity(
+                response.equals(HttpServletResponse.SC_FORBIDDEN) ?
+                        HttpStatus.FORBIDDEN :
+                        HttpStatus.OK);
     }
 
     /**
