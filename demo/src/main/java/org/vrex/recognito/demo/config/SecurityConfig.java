@@ -45,7 +45,7 @@ public class SecurityConfig {
 
 
                     .antMatchers(HttpMethod.GET, "/user/login").hasAnyAuthority(Role.APP_ADMIN.name(), Role.APP_DEVELOPER.name(), Role.APP_USER.name())
-                    .antMatchers(HttpMethod.GET, "/user/authorize/**").hasAnyAuthority(Role.APP_ADMIN.name(), Role.APP_DEVELOPER.name(), Role.APP_USER.name())
+                    .antMatchers(HttpMethod.GET, "/user/authorize/resource/**").hasAnyAuthority(Role.APP_ADMIN.name(), Role.APP_DEVELOPER.name(), Role.APP_USER.name())
 
                     .anyRequest()
                     .authenticated()
