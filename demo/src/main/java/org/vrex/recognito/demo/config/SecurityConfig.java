@@ -34,14 +34,19 @@ public class SecurityConfig {
             authenticationManagerBuilder.authenticationProvider(userAuthenticationProvider);
             authenticationManager = authenticationManagerBuilder.build();
 
-            http.cors().and().csrf().disable().authenticationManager(authenticationManager).sessionManagement().sessionCreationPolicy(SessionCreationPolicy.ALWAYS).and()
+            http.cors().and().csrf().disable()
                     .addFilterAfter(authFilter, AuthorizationFilter.class)
+                    .authenticationManager(authenticationManager).sessionManagement()
+                    .sessionCreationPolicy(SessionCreationPolicy.ALWAYS).and()
                     .authorizeRequests()
+
 
                     .antMatchers(HttpMethod.GET, "/user/login").hasAnyAuthority(Role.APP_ADMIN.name(), Role.APP_DEVELOPER.name(), Role.APP_USER.name())
                     .antMatchers(HttpMethod.GET, "/user/authorize/**").hasAnyAuthority(Role.APP_ADMIN.name(), Role.APP_DEVELOPER.name(), Role.APP_USER.name())
 
                     .anyRequest().authenticated()
+
+
 
                     .and().formLogin().and().httpBasic();
 
