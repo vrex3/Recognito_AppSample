@@ -1,11 +1,9 @@
 package org.vrex.recognito.demo.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.vrex.recognito.demo.model.ApplicationException;
 import org.vrex.recognito.demo.model.recognito.RecognitoClient;
 
 import javax.servlet.FilterChain;
@@ -31,7 +29,6 @@ public class TokenValidationFilter extends OncePerRequestFilter {
 
         if (!recognitoClient.authorizeUser(resource)) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            //throw ApplicationException.builder().status(HttpStatus.FORBIDDEN).build();
         } else
             response.setStatus(HttpServletResponse.SC_ACCEPTED);
 

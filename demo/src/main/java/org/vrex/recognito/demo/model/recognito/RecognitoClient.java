@@ -104,7 +104,7 @@ public class RecognitoClient implements InitializingBean {
      */
     public ResponseEntity buildAuthResponse(HttpServletResponse response) {
         return new ResponseEntity(
-                response.equals(HttpServletResponse.SC_FORBIDDEN) ?
+                response.getStatus() == HttpServletResponse.SC_FORBIDDEN ?
                         HttpStatus.FORBIDDEN :
                         HttpStatus.OK);
     }
