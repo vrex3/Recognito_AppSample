@@ -37,13 +37,16 @@ public class SecurityConfig {
             http.cors()
                     .and()
                     .csrf().disable()
+
+
                     .addFilterAfter(authFilter, AuthorizationFilter.class)
                     .authenticationManager(authenticationManager).sessionManagement()
                     .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
                     .and()
                     .authorizeRequests()
 
-
+                    .antMatchers(HttpMethod.POST, "/user/register").permitAll()
+                    .antMatchers(HttpMethod.POST, "/user/authorize/resource/**").hasAnyAuthority(Role.APP_ADMIN.name(), Role.APP_DEVELOPER.name(), Role.APP_USER.name())
                     .antMatchers(HttpMethod.GET, "/user/login").hasAnyAuthority(Role.APP_ADMIN.name(), Role.APP_DEVELOPER.name(), Role.APP_USER.name())
                     .antMatchers(HttpMethod.GET, "/user/authorize/resource/**").hasAnyAuthority(Role.APP_ADMIN.name(), Role.APP_DEVELOPER.name(), Role.APP_USER.name())
 

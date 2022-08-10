@@ -20,6 +20,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.vrex.recognito.demo.model.ApplicationException;
 
@@ -48,6 +49,12 @@ public class RecognitoClient implements InitializingBean {
     @Value("${recognito.port}")
     private String recognitoPort;
 
+    @Value("${recognito.app.identifier}")
+    private String appIdentifier;
+
+    @Value("${recognito.app.secret}")
+    private String appInviteSecret;
+
     private LoggedInUser loggedInUser;
 
     @Override
@@ -67,6 +74,30 @@ public class RecognitoClient implements InitializingBean {
         this.loggedInUser.setRestTemplate(new RestTemplateBuilder()
                 .basicAuthentication(authentication.getName(), authentication.getCredentials().toString())
                 .build());
+    }
+
+    /**
+     * Registers a user in recognito and returns the registered user data.
+     *
+     * @param username
+     * @param email
+     * @param role
+     * @return
+     */
+    public ResponseEntity<?> registerUser(String username, String email, String role) {
+        RestTemplate restTemplate = new RestTemplate();
+
+        RegisterUserRequest request = buildUserRegistrationRequest(username, email, role);
+        ResponseEntity response = restTemplate.exchange(
+                buildURI(RECOGNITO_REGISTER_USER, null),
+                HttpMethod.POST,
+                new HttpEntity<>(buildUserRegistrationRequest(username, email, role), new HttpHeaders()),
+                UserDetails.class);
+
+        if (response != null && response.getStatusCode().equals(HttpStatus.OK))
+            return new ResponseEntity<>(response.getBody(), response.getStatusCode());
+        else
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -151,6 +182,7 @@ public class RecognitoClient implements InitializingBean {
     private static final String HTTP_SCHEME = "http";
 
     private static final String RECOGNITO_CLIENT_API = "/client/user";
+    private static final String RECOGNITO_REGISTER_USER = RECOGNITO_CLIENT_API + "/register";
     private static final String RECOGNITO_LOGIN = RECOGNITO_CLIENT_API + "/login";
     private static final String RECOGNITO_GENERATE_TOKEN = RECOGNITO_CLIENT_API + "/token/generate";
     private static final String RECOGNITO_AUTHORIZE_TOKEN = RECOGNITO_CLIENT_API + "/token/authorize";
@@ -169,7 +201,11 @@ public class RecognitoClient implements InitializingBean {
         ResponseEntity response = null;
 
         try {
-            response = this.loggedInUser.getRestTemplate().exchange(buildURI(path, null), HttpMethod.GET, getHttpEntityWithJsessionCookie(), clazz);
+            response = this.loggedInUser.getRestTemplate().exchange(
+                    buildURI(path, null),
+                    HttpMethod.GET,
+                    getHttpEntityWithJsessionCookie(),
+                    clazz);
             setSessionCookie(response);
         } catch (HttpClientErrorException exception) { //4xx status code
             throw ApplicationException.builder()
@@ -284,5 +320,17 @@ public class RecognitoClient implements InitializingBean {
                         .encode()
                         .toUri();
 
+    }
+
+    /**
+     * Builds and returns register user request
+     *
+     * @param username
+     * @param email
+     * @param role
+     * @return
+     */
+    private RegisterUserRequest buildUserRegistrationRequest(String username, String email, String role) {
+        return new RegisterUserRequest(username, email, role, appIdentifier, appInviteSecret);
     }
 }
