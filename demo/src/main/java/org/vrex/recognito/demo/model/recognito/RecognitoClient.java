@@ -155,7 +155,7 @@ public class RecognitoClient implements InitializingBean {
         uriVariables.add(RESOURCE, resource);
 
         MultiValueMap<String, String> headerParams = new LinkedMultiValueMap<>();
-        headerParams.add(APP_UUID, loggedInUser.getUserDetails().getAppUUID());
+        //headerParams.add(APP_UUID, loggedInUser.getUserDetails().getAppUUID());
         headerParams.add(APP_TOKEN, loggedInUser.getToken());
 
         HttpEntity entity = getHttpEntityWithJsessionCookie(headerParams);
@@ -172,7 +172,7 @@ public class RecognitoClient implements InitializingBean {
 
     private static final String SESSION_COOKIE_REQUEST_KEY = "Cookie";
     private static final String SESSION_COOKIE_RESPONSE_KEY = "Set-Cookie";
-    private static final String APP_UUID = "x-app-uuid";
+    //private static final String APP_UUID = "x-app-uuid";
     public static final String APP_TOKEN = "x-auth-token";
     private static final String RESOURCE = "x-resource";
 
